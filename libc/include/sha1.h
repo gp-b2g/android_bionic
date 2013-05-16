@@ -13,7 +13,7 @@
 #include <sys/types.h>
 
 #define SHA1_DIGEST_LENGTH		20
-#define SHA1_DIGEST_STRING_LENGTH	41
+#define SHA1_BLOCK_SIZE 		64
 
 typedef struct {
 	uint32_t state[5];

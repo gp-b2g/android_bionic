@@ -52,7 +52,7 @@
 #include "linker_format.h"
 
 #define ALLOW_SYMBOLS_FROM_MAIN 1
-#define SO_MAX 128
+#define SO_MAX 256
 
 /* Assume average path length of 64 and max 8 paths */
 #define LDPATH_BUFSIZE 512
@@ -108,7 +108,10 @@ static const char *ldpreload_names[LDPRELOAD_MAX + 1];
 
 static soinfo *preloads[LDPRELOAD_MAX + 1];
 
+#if LINKER_DEBUG
 int debug_verbosity;
+#endif
+
 static int pid;
 
 /* This boolean is set if the program being loaded is setuid */
@@ -428,9 +431,16 @@ static unsigned elfhash(const char *_name)
     while(*name) {
         h = (h << 4) + *name++;
         g = h & 0xf0000000;
-        h ^= g;
+        /* The hash algorithm in the ELF ABI is as follows:
+         *   if (g != 0)
+         *       h ^=g >> 24;
+         *   h &= ~g;
+         * But we can use the equivalent and faster implementation:
+         */
         h ^= g >> 24;
     }
+    /* Lift the operation out of the inner loop */
+    h &= 0x0fffffff;
     return h;
 }
 
@@ -2123,10 +2133,12 @@ unsigned __linker_init(unsigned **elfdata)
 
     /* Get a few environment variables */
     {
+#if LINKER_DEBUG
         const char* env;
         env = linker_env_get("DEBUG"); /* XXX: TODO: Change to LD_DEBUG */
         if (env)
             debug_verbosity = atoi(env);
+#endif
 
         /* Normally, these are cleaned by linker_env_secure, but the test
          * against program_is_setuid doesn't cost us anything */

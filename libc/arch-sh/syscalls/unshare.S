@@ -2,19 +2,19 @@
 #include <sys/linux-syscalls.h>
 
     .text
-    .type getresgid, @function
-    .globl getresgid
+    .type unshare, @function
+    .globl unshare
     .align 4
 
-getresgid:
+unshare:
 
     /* invoke trap */
     mov.l   0f, r3  /* trap num */
-    trapa   #(3 + 0x10)
+    trapa   #(1 + 0x10)
 
     /* check return value */
     cmp/pz  r0
-    bt      __NR_getresgid32_end
+    bt      __NR_unshare_end
 
     /* keep error number */
     sts.l   pr, @-r15
@@ -23,10 +23,10 @@ getresgid:
     mov     r0, r4
     lds.l   @r15+, pr
 
-__NR_getresgid32_end:
+__NR_unshare_end:
     rts
     nop
 
     .align  2
-0:  .long   __NR_getresgid32
+0:  .long   __NR_unshare
 1:  .long   __set_syscall_errno

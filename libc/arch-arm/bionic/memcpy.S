@@ -31,7 +31,7 @@
 #include <machine/cpu-features.h>
 #include <machine/asm.h>
 
-#if defined(__ARM_NEON__)
+#if defined(__ARM_NEON__) && !defined(ARCH_ARM_USE_NON_NEON_MEMCPY)
 #if defined(KRAIT_NEON_OPTIMIZATION)
 	/*
 	 * These can be overridden in:

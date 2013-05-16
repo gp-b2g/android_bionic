@@ -10,7 +10,7 @@ getresuid:
 
     /* invoke trap */
     mov.l   0f, r3  /* trap num */
-    trapa   #(0 + 0x10)
+    trapa   #(3 + 0x10)
 
     /* check return value */
     cmp/pz  r0

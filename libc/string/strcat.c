@@ -45,7 +45,13 @@ strcat(char *s, const char *append)
 {
 	char *save = s;
 
+#if defined(__ARM_NEON__) && !defined(ARCH_ARM_USE_NON_NEON_MEMCPY)
+    s += strlen(s);
+    strcpy(s, append);
+    return save;
+#else
 	for (; *s; ++s);
 	while ((*s++ = *append++) != '\0');
 	return(save);
+#endif
 }

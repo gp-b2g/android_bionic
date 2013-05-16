@@ -77,7 +77,7 @@ extern const MallocDebug* __libc_malloc_dispatch;
 
 static int gTrapOnError = 1;
 
-#define MALLOC_ALIGNMENT    8
+#define MALLOC_ALIGNMENT    16
 #define GUARD               0x48151642
 #define DEBUG               0
 
@@ -264,7 +264,7 @@ int get_backtrace(intptr_t* addrs, size_t max_entries)
 
 #define CHK_FILL_FREE           0xef
 #define CHK_SENTINEL_VALUE      0xeb
-#define CHK_SENTINEL_HEAD_SIZE  16
+#define CHK_SENTINEL_HEAD_SIZE  0   /* to avoid alignment issue */
 #define CHK_SENTINEL_TAIL_SIZE  16
 #define CHK_OVERHEAD_SIZE       (   CHK_SENTINEL_HEAD_SIZE +    \
                                     CHK_SENTINEL_TAIL_SIZE +    \

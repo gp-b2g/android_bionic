@@ -113,7 +113,66 @@ memset:
 	.end
 #else   /* !(SCORPION_NEON_OPTIMIZATION || CORTEX_CACHE_LINE_32) */
 
-	
+#if defined(__ARM_NEON__) && !defined(ARCH_ARM_USE_NON_NEON_MEMCPY)
+@ this lets us check a flag in a 00/ff byte easily in either endianness
+#ifdef __ARMEB__
+#define CHARTSTMASK(c) 1<<(31-(c*8))
+#else
+#define CHARTSTMASK(c) 1<<(c*8)
+#endif
+	.text
+	.thumb
+
+@ ---------------------------------------------------------------------------
+    .code   32
+	.p2align 4,,15
+ENTRY(memset)
+    and     r1, r1, #0xff
+    cmp     r2, #0
+    bxeq    lr
+    orr     r1, r1, r1, lsl #8
+    tst     r0, #7
+    mov     r3, r0
+    orr     r1, r1, r1, lsl #16
+    beq     .Lmemset_align8
+.Lmemset_make_align:
+    strb    r1, [r3], #1
+    subs    r2, r2, #1
+    bxeq    lr
+    tst     r3, #7
+    bne     .Lmemset_make_align
+
+.Lmemset_align8:
+    cmp     r2, #16
+    mov     r12, r1
+    blt     .Lmemset_less16
+    push    {r4, lr}
+    mov     r4, r1
+    mov     lr, r1
+.Lmemset_loop32:
+    subs    r2, r2, #32
+    stmhsia r3!, {r1, r4, r12, lr}
+    stmhsia r3!, {r1, r4, r12, lr}
+    bhs     .Lmemset_loop32
+    adds    r2, r2, #32
+    popeq   {r4, pc}
+    tst     r2, #16
+    stmneia r3!, {r1, r4, r12, lr}
+    pop     {r4, lr}
+    subs    r2, #16
+    bxeq    lr
+.Lmemset_less16:
+    movs    r2, r2, lsl #29
+    stmcsia r3!, {r1, r12}
+    strmi   r1, [r3], #4
+    movs    r2, r2, lsl #2
+    strhcs  r1, [r3], #2
+    strbmi  r1, [r3], #1
+    bx      lr
+
+END(memset)
+
+#else	
 		/*
 		 * Optimized memset() for ARM.
          *
@@ -193,5 +252,5 @@ ENTRY(memset)
         ldmfd		sp!, {r0, r4-r7, lr}
         bx          lr
 END(memset)
-    
+#endif    
 #endif  /* SCORPION_NEON_OPTIMIZATION */

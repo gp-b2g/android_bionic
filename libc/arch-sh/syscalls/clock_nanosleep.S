@@ -10,7 +10,7 @@ clock_nanosleep:
 
     /* invoke trap */
     mov.l   0f, r3  /* trap num */
-    trapa   #(2 + 0x10)
+    trapa   #(4 + 0x10)
 
     /* check return value */
     cmp/pz  r0

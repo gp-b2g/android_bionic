@@ -26,20 +26,23 @@
  * SUCH DAMAGE.
  */
 #include <unistd.h>
+#include <stdio.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include "cpuacct.h"
+#include <fcntl.h>
 
 int cpuacct_add(uid_t uid)
 {
     int count;
     int fd;
     char buf[80];
+    ssize_t n;
+    int ret = 0;
 
     count = snprintf(buf, sizeof(buf), "/acct/uid/%d/tasks", uid);
-    fd = open(buf, O_RDWR|O_CREAT|O_TRUNC|O_SYNC);
-    if (fd < 0) {
+    fd = open(buf, O_RDWR | O_CREAT, 0666);
+    if (fd == -1) {
         /* Note: sizeof("tasks") returns 6, which includes the NULL char */
         buf[count - sizeof("tasks")] = 0;
         if (mkdir(buf, 0775) < 0)
@@ -47,14 +50,19 @@ int cpuacct_add(uid_t uid)
 
         /* Note: sizeof("tasks") returns 6, which includes the NULL char */
         buf[count - sizeof("tasks")] = '/';
-        fd = open(buf, O_RDWR|O_CREAT|O_TRUNC|O_SYNC);
+        fd = open(buf, O_RDWR | O_CREAT, 0666);
     }
-    if (fd < 0)
+    if (fd == -1)
         return -errno;
 
-    write(fd, "0", 2);
-    if (close(fd))
+    n = TEMP_FAILURE_RETRY(write(fd, "0", 1));
+    if (n < 0)
+        ret = -errno;
+    else if (n == 0)
+        ret = -EIO;
+
+    if (TEMP_FAILURE_RETRY(close(fd)) == -1)
         return -errno;
 
-    return 0;
+    return ret;
 }
